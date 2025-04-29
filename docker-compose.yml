@@ -1,0 +1,27 @@
+services:
+  drone:
+    image: cyu72/drone:latest
+    network_mode: "host"
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    stdin_open: true
+    tty: true
+    env_file:
+      - config.env
+    healthcheck:
+      test: ["CMD", "nc", "-z", "127.0.0.1", "60137"]
+      interval: 2s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  interactive:
+    image: cyu72/drone:latest
+    network_mode: "host"
+    command: ["./drone_app", "--terminal"]
+    tty: true
+    stdin_open: true
+    depends_on:
+      drone:
+        condition: service_healthy

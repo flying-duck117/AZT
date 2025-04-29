@@ -1,0 +1,15 @@
+services:
+  drone:
+    image: cyu72/gcs:latest
+    network_mode: "host"
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    stdin_open: true
+    tty: true
+    environment:
+      - SKIP_VERIFICATION=${SKIP_VERIFICATION:-false}  # Set to 'true' to bypass device verification
+      - CERT_VALIDITY_MINUTES=${CERT_VALIDITY_MINUTES:-59}
+    volumes:
+      - ./gcs/allowed_devices.json:/app/allowed_devices.json
+      - ./certs:/app/certs

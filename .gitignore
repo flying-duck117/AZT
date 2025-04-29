@@ -1,0 +1,10 @@
+.vscode
+CMakeFiles
+build/
+Testing/
+docker/
+kubernetes/
+Makefile
+.DS_STORE
+.venv
+kubernetes/

@@ -1,0 +1,43 @@
+FROM alpine:latest AS builder
+
+RUN apk add --no-cache \
+    g++ make cmake ninja ccache protobuf protobuf-dev \
+    git openssl-dev python3 python3-dev
+
+ENV CCACHE_DIR=/ccache
+RUN mkdir -p /ccache
+
+WORKDIR /app/drone_security_protocol/DroneRouting
+COPY drone_security_protocol/DroneRouting/CMakeLists.txt .
+
+COPY drone_security_protocol/DroneRouting/src ./src
+COPY drone_security_protocol/DroneRouting/include ./include
+
+RUN mkdir build && cd build && \
+    cmake -G Ninja \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+          .. && \
+    ninja -j$(nproc)
+
+FROM alpine:latest
+
+RUN apk add --no-cache libstdc++ openssl python3 libcurl
+
+WORKDIR /app
+
+COPY --from=builder /app/drone_security_protocol/DroneRouting/build/libdrone_routing.so /usr/local/lib/
+COPY --from=builder /app/drone_security_protocol/DroneRouting/build/drone_app /app/drone_app
+COPY --from=builder /usr/local/lib/libcpr.so* /usr/local/lib/
+
+ENV LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
+
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
+RUN ldconfig /usr/local/lib
+
+USER root
+
+EXPOSE 65456
+
+CMD ["/app/drone_app"]
